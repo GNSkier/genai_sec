@@ -1,0 +1,16 @@
+name: gensec
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pytest
+  - networkx
+  - matplotlib
+  - spacy
+  - pip:
+      - en-core-web-sm==3.7.1
+
+
+
