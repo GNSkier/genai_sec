@@ -1,0 +1,3 @@
+#!/bin/bash
+# Convenience script for demo mode
+python llm/gemini/gemini_simple_demo.py

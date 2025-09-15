@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "pii-sanitizer": {
+      "command": "python",
+      "args": ["vuln_mcp_stdio.py"],
+      "env": {
+        "PYTHONPATH": "."
+      }
+    }
+  }
+}

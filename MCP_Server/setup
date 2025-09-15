@@ -1,0 +1,3 @@
+#!/bin/bash
+# Convenience script for setup
+python cli/tools/setup_real_llm.py

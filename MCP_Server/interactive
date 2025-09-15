@@ -1,0 +1,3 @@
+#!/bin/bash
+# Convenience script for interactive mode
+python llm/gemini/gemini_interactive.py --interactive

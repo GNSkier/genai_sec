@@ -21,6 +21,13 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from mcp.server.fastmcp import FastMCP
 from sse_starlette.sse import EventSourceResponse
 
+# Import the sanitizer agent
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from agent.sanitizer_agent import SanitizerAgent
+
 # Database setup
 DB_NAME = "vulnerable_mcp_sse.db"
 
@@ -398,6 +405,68 @@ def get_system_info() -> str:
         return json.dumps(info, indent=2)
     except Exception as e:
         return f"Error getting system info: {e}"
+
+
+# PII Sanitization Tools
+@mcp.tool()
+def detect_pii(text: str) -> str:
+    """Detect PII in the given text using enhanced detection methods."""
+    try:
+        agent = SanitizerAgent()
+        detection_summary = agent.detect_pii(text)
+        return json.dumps(detection_summary, indent=2)
+    except Exception as e:
+        return f"Error detecting PII: {e}"
+
+
+@mcp.tool()
+def sanitize_text(text: str, redaction_type: str = "generic") -> str:
+    """Sanitize text by redacting detected PII. Options: generic, mask, remove."""
+    try:
+        agent = SanitizerAgent()
+        result = agent.sanitize_text(text, redaction_type)
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        return f"Error sanitizing text: {e}"
+
+
+@mcp.tool()
+def get_sanitization_report(text: str) -> str:
+    """Get a detailed report of what PII would be detected and sanitized."""
+    try:
+        agent = SanitizerAgent()
+        report = agent.get_sanitization_report(text)
+        return json.dumps(report, indent=2)
+    except Exception as e:
+        return f"Error generating sanitization report: {e}"
+
+
+@mcp.tool()
+def sanitize_file(file_path: str, redaction_type: str = "generic") -> str:
+    """Sanitize a file by redacting detected PII. Returns sanitized content."""
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+
+        agent = SanitizerAgent()
+        result = agent.sanitize_text(content, redaction_type)
+
+        # Write sanitized content to a new file
+        sanitized_path = file_path + ".sanitized"
+        with open(sanitized_path, "w", encoding="utf-8") as f:
+            f.write(result["sanitized_text"])
+
+        return json.dumps(
+            {
+                "original_file": file_path,
+                "sanitized_file": sanitized_path,
+                "pii_detected": result["pii_detected"],
+                "detection_summary": result["detection_summary"],
+            },
+            indent=2,
+        )
+    except Exception as e:
+        return f"Error sanitizing file: {e}"
 
 
 if __name__ == "__main__":

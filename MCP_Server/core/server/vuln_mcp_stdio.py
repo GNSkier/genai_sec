@@ -11,6 +11,13 @@ import psutil
 import json
 from pathlib import Path
 
+# Import the sanitizer agent
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from agent.sanitizer_agent import SanitizerAgent
+
 # Initialize the MCP server
 mcp = FastMCP("Vulnerable MCP Server")
 
@@ -358,6 +365,68 @@ def read_logs(log_file: str = "sensitive.log") -> str:
         return f"Error reading logs: {e}"
 
 
+# PII Sanitization Tools
+@mcp.tool()
+def detect_pii(text: str) -> str:
+    """Detect PII in the given text using enhanced detection methods."""
+    try:
+        agent = SanitizerAgent()
+        detection_summary = agent.detect_pii(text)
+        return json.dumps(detection_summary, indent=2)
+    except Exception as e:
+        return f"Error detecting PII: {e}"
+
+
+@mcp.tool()
+def sanitize_text(text: str, redaction_type: str = "generic") -> str:
+    """Sanitize text by redacting detected PII. Options: generic, mask, remove."""
+    try:
+        agent = SanitizerAgent()
+        result = agent.sanitize_text(text, redaction_type)
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        return f"Error sanitizing text: {e}"
+
+
+@mcp.tool()
+def get_sanitization_report(text: str) -> str:
+    """Get a detailed report of what PII would be detected and sanitized."""
+    try:
+        agent = SanitizerAgent()
+        report = agent.get_sanitization_report(text)
+        return json.dumps(report, indent=2)
+    except Exception as e:
+        return f"Error generating sanitization report: {e}"
+
+
+@mcp.tool()
+def sanitize_file(file_path: str, redaction_type: str = "generic") -> str:
+    """Sanitize a file by redacting detected PII. Returns sanitized content."""
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+
+        agent = SanitizerAgent()
+        result = agent.sanitize_text(content, redaction_type)
+
+        # Write sanitized content to a new file
+        sanitized_path = file_path + ".sanitized"
+        with open(sanitized_path, "w", encoding="utf-8") as f:
+            f.write(result["sanitized_text"])
+
+        return json.dumps(
+            {
+                "original_file": file_path,
+                "sanitized_file": sanitized_path,
+                "pii_detected": result["pii_detected"],
+                "detection_summary": result["detection_summary"],
+            },
+            indent=2,
+        )
+    except Exception as e:
+        return f"Error sanitizing file: {e}"
+
+
 if __name__ == "__main__":
     setup_database()
     print("Starting Vulnerable MCP Server with STDIO transport...")
@@ -385,4 +454,8 @@ if __name__ == "__main__":
     print("- get_network_interfaces: Network information exposure")
     print("- log_sensitive_data: Logging vulnerability")
     print("- read_logs: Log file access")
+    print("- detect_pii: Detect PII in text")
+    print("- sanitize_text: Sanitize text by redacting PII")
+    print("- get_sanitization_report: Get detailed PII detection report")
+    print("- sanitize_file: Sanitize file content and save to new file")
     mcp.run(transport="stdio")

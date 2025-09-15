@@ -1,0 +1,3 @@
+#!/bin/bash
+# Convenience script for sanitize CLI
+python cli/tools/sanitize_cli.py "$@"

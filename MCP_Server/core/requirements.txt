@@ -38,3 +38,8 @@ alembic>=1.12.0
 
 # Optional: Additional attack payloads and utilities
 faker>=20.1.0
+
+# PII Detection and Sanitization dependencies
+spacy>=3.7.0
+networkx>=3.0
+matplotlib>=3.7.0
